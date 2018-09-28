@@ -28,30 +28,15 @@ def handle_calculate_IK(req):
 
         ### Your FK code here
         # Create symbols
-	#
-	#
-	# Create Modified DH parameters
-	#
-	#
-	# Define Modified DH Transformation matrix
-	#
-	#
-	# Create individual transformation matrices
-	#
-	#
-	# Extract rotation matrices from the transformation matrices
-	#
-	#
-        ###
-
+        #
         # Define DH parameter symbols
         d1, d2, d3, d4, d5, d6, d7 = symbols('d1:8')
         a0, a1, a2, a3, a4, a5, a6 = symbols('a0:7')
         alpha0, alpha1, alpha2, alpha3, alpha4, alpha5, alpha6 = symbols('alpha0:7')
-
         # Joint angle symbols
         q1, q2, q3, q4, q5, q6, q7 = symbols('q1:8')
 
+        # Create Modified DH parameters
         # KR210 FK
         DH_Table = { alpha0:      0, a0:      0, d1:  0.75, q1:          q1,
                 alpha1: -pi/2., a1:   0.35, d2:     0, q2: -pi/2. + q2,
@@ -61,7 +46,7 @@ def handle_calculate_IK(req):
                 alpha5: -pi/2., a5:      0, d6:     0, q6:          q6,
                 alpha6:      0, a6:      0, d7: 0.303, q7:           0}
 
-        # Define DH Transformation matrix
+        # Define Modified DH Transformation matrix
         def TF_Matrix(alpha, a, d, q):
                 TF = Matrix([[      cos(q),     -sin(q),        0,      a],
                         [ sin(q)*cos(alpha), cos(q)*cos(alpha),  -sin(alpha),  -sin(alpha)*d],
@@ -70,7 +55,6 @@ def handle_calculate_IK(req):
                 return TF
 
         # Create individual transformation matrices
-
         T0_1 =  TF_Matrix(alpha0, a0, d1, q1).subs(DH_Table)
         T1_2 =  TF_Matrix(alpha1, a1, d2, q2).subs(DH_Table)
         T2_3 =  TF_Matrix(alpha2, a2, d3, q3).subs(DH_Table)
@@ -79,8 +63,29 @@ def handle_calculate_IK(req):
         T5_6 =  TF_Matrix(alpha5, a5, d6, q6).subs(DH_Table)
         T6_EE = TF_Matrix(alpha6, a6, d7, q7).subs(DH_Table)
 
+        # Extract rotation matrices from the transformation matrices
         T0_EE = T0_1 * T1_2 * T2_3 * T3_4 * T4_5 * T5_6 * T6_EE
 
+        # Find EE rotation matrix
+        r, p, y = symbols('r p y')
+
+        ROT_x = Matrix([[       1,       0,       0],
+                        [       0,  cos(r), -sin(r)],
+                        [       0,  sin(r),  cos(r)]])
+
+        ROT_y = Matrix([[  cos(p),       0,  sin(p)],
+                        [       0,       1,       0],
+                        [ -sin(p),       0,  cos(p)]])
+
+        ROT_z = Matrix([[  cos(y), -sin(y),       0],
+                        [  sin(y),  cos(y),       0],
+                        [       0,       0,       1]])
+
+        ROT_EE = ROT_z * ROT_y * ROT_x
+
+        Rot_error = ROT_z.subs(y, radians(180)) * ROT_y.subs(p, radians(-90))
+
+        ROT_EE = simplify(ROT_EE * Rot_error)
 
         # Initialize service response
         joint_trajectory_list = []
@@ -88,9 +93,9 @@ def handle_calculate_IK(req):
             # IK code starts here
             joint_trajectory_point = JointTrajectoryPoint()
 
-	    # Extract end-effector position and orientation from request
-	    # px,py,pz = end-effector position
-	    # roll, pitch, yaw = end-effector orientation
+	        # Extract end-effector position and orientation from request
+	        # px,py,pz = end-effector position
+	        # roll, pitch, yaw = end-effector orientation
             px = req.poses[x].position.x
             py = req.poses[x].position.y
             pz = req.poses[x].position.z
@@ -100,35 +105,7 @@ def handle_calculate_IK(req):
                     req.poses[x].orientation.z, req.poses[x].orientation.w])
 
             ### Your IK code here
-	    # Compensate for rotation discrepancy between DH parameters and Gazebo
-	    #
-	    #
-	    # Calculate joint angles using Geometric IK method
-	    #
-	    #
-            ###
-
-            # Find EE rotation matrix
-
-            r, p, y = symbols('r p y')
-
-            ROT_x = Matrix([[1, 0, 0],
-                [0, cos(r), -sin(r)],
-                [0, sin(r), cos(r)]])
-
-            ROT_y = Matrix([[cos(p), 0, sin(p)],
-                [0, 1, 0],
-                [-sin(p), 0, cos(p)]])
-
-            ROT_z = Matrix([[cos(y), -sin(y), 0],
-                [sin(y), cos(y), 0],
-                [0, 0, 1]])
-
-            ROT_EE = ROT_z * ROT_y * ROT_x
-
-            Rot_error = ROT_z.subs(y, radians(180)) * ROT_y.subs(p, radians(-90))
-
-            ROT_EE = ROT_EE * Rot_error
+            # Compensate for rotation discrepancy between DH parameters and Gazebo
             ROT_EE = ROT_EE.subs({'r': roll, 'p': pitch, 'y': yaw})
 
             EE = Matrix([[px],
@@ -137,7 +114,7 @@ def handle_calculate_IK(req):
 
             WC = EE - (0.303) * ROT_EE[:,2]
 
-            # Calculate joint angles
+            # Calculate joint angles using Geometric IK method
             theta1 = atan2(WC[1],WC[0])
 
             # SSS triangle for theta2 and theta3
@@ -155,7 +132,7 @@ def handle_calculate_IK(req):
             R0_3 = T0_1[0:3,0:3] * T1_2[0:3,0:3] * T2_3[0:3,0:3]
             R0_3 = R0_3.evalf(subs={q1: theta1, q2: theta2, q3: theta3})
 
-            R3_6 = R0_3.inv("LU") * ROT_EE
+            R3_6 = R0_3.transpose() * ROT_EE # transpose() works better than inv(method="LU")
 
             # Euler angles from rotation matrix
             theta4 = atan2(R3_6[2,2], -R3_6[0,2])
@@ -164,8 +141,8 @@ def handle_calculate_IK(req):
 
             # Populate response for the IK request
             # In the next line replace theta1,theta2...,theta6 by your joint angle variables
-	    joint_trajectory_point.positions = [theta1, theta2, theta3, theta4, theta5, theta6]
-	    joint_trajectory_list.append(joint_trajectory_point)
+            joint_trajectory_point.positions = [theta1, theta2, theta3, theta4, theta5, theta6]
+            joint_trajectory_list.append(joint_trajectory_point)
 
         rospy.loginfo("length of Joint Trajectory List: %s" % len(joint_trajectory_list))
         return CalculateIKResponse(joint_trajectory_list)
