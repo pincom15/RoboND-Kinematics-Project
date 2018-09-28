@@ -27,28 +27,28 @@
 
 We can find the URDF configuration in `kr210.urdf.xacro` file. From the URDF file, we can extract the position and orientation of each joint.
 
-- | joint | parent | child | x | y | z | r | p | y |
---- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-0 | fixed_base_joint | base_footprint | base_link | 0 | 0 | 0 | 0 | 0 | 0 |
-1 | joint_1 | base_link | link_1 | 0 | 0 | 0.33 | 0 | 0 | 0 |
-2 | joint_2 | link_1 | link_2 | 0 .35| 0 | 0.42 | 0 | 0 | 0 |
-3 | joint_3 | link_2 | link_3 | 0 | 0 | 1.25 | 0 | 0 | 0 |
-4 | joint_4 | link_3 | link_4 | 0.96 | 0 | -0.054 | 0 | 0 | 0 |
-5 | joint_5 | link_4 | link_5 | 0.54 | 0 | 0 | 0 | 0 | 0 |
-6 | joint_6 | link_5 | link_6 | 0.193 | 0 | 0 | 0 | 0 | 0 |
-EE | gripper_joint | link_6 | gripper_link | 0.11 | 0 | 0 | 0 | 0 | 0 |
+| no | joint | parent | child | x | y | z | r | p | y |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 0 | fixed_base_joint | base_footprint | base_link | 0 | 0 | 0 | 0 | 0 | 0 |
+| 1 | joint_1 | base_link | link_1 | 0 | 0 | 0.33 | 0 | 0 | 0 |
+| 2 | joint_2 | link_1 | link_2 | 0 .35| 0 | 0.42 | 0 | 0 | 0 |
+| 3 | joint_3 | link_2 | link_3 | 0 | 0 | 1.25 | 0 | 0 | 0 |
+| 4 | joint_4 | link_3 | link_4 | 0.96 | 0 | -0.054 | 0 | 0 | 0 |
+| 5 | joint_5 | link_4 | link_5 | 0.54 | 0 | 0 | 0 | 0 | 0 |
+| 6 | joint_6 | link_5 | link_6 | 0.193 | 0 | 0 | 0 | 0 | 0 |
+| EE | gripper_joint | link_6 | gripper_link | 0.11 | 0 | 0 | 0 | 0 | 0 |
 
 We can derive our modified DH table.
 
-Links | i | alpha(i-1) | a(i-1) | d(i) | theta(i) |
---- | --- | --- | --- | ---
-0->1 | 1 | 0 | 0 | 0.75 | q1 |
-1->2 | 2 | -pi/2 | 0.35 | 0 | -pi/2+q2 |
-2->3 | 3 | 0 |  | 1.25 | q3 |
-3->4 | 4 | -pi/2 | -0.05 | 1.5 | q4 |
-4->5 | 5 | pi/2 | 0 | 0 | q5 |
-5->6 | 6 | -pi | 0 | 0 | q6 |
-6->7 | 7 | 0 | 0 | 0.303 | q7 |
+| Links | i | alpha(i-1) | a(i-1) | d(i) | theta(i) |
+| ---- | --- | --- | --- | --- | --- |
+| 0->1 | 1 | 0 | 0 | 0.75 | q1 |
+| 1->2 | 2 | -pi/2 | 0.35 | 0 | -pi/2+q2 |
+| 2->3 | 3 | 0 |  | 1.25 | q3 |
+| 3->4 | 4 | -pi/2 | -0.05 | 1.5 | q4 |
+| 4->5 | 5 | pi/2 | 0 | 0 | q5 |
+| 5->6 | 6 | -pi | 0 | 0 | q6 |
+| 6->7 | 7 | 0 | 0 | 0.303 | q7 |
 
 
 ![alt text][image1]
