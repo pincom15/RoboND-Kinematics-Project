@@ -18,6 +18,9 @@
 [image1]: ./misc_images/misc1.png
 [image2]: ./misc_images/misc3.png
 [image3]: ./misc_images/misc2.png
+[fk1]: ./misc_images/fk_from_urdf.jpg
+[fk2]: ./misc_images/fk_modified.jpg
+[result]: ./misc_images/result.jpg
 
 ---
 
@@ -27,37 +30,39 @@
 
 We can find the URDF configuration in `kr210.urdf.xacro` file. From the URDF file, we can extract the position and orientation of each joint.
 
-| no | joint | parent | child | x | y | z | r | p | y |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 0 | fixed_base_joint | base_footprint | base_link | 0 | 0 | 0 | 0 | 0 | 0 |
-| 1 | joint_1 | base_link | link_1 | 0 | 0 | 0.33 | 0 | 0 | 0 |
-| 2 | joint_2 | link_1 | link_2 | 0 .35| 0 | 0.42 | 0 | 0 | 0 |
-| 3 | joint_3 | link_2 | link_3 | 0 | 0 | 1.25 | 0 | 0 | 0 |
-| 4 | joint_4 | link_3 | link_4 | 0.96 | 0 | -0.054 | 0 | 0 | 0 |
-| 5 | joint_5 | link_4 | link_5 | 0.54 | 0 | 0 | 0 | 0 | 0 |
-| 6 | joint_6 | link_5 | link_6 | 0.193 | 0 | 0 | 0 | 0 | 0 |
-| EE | gripper_joint | link_6 | gripper_link | 0.11 | 0 | 0 | 0 | 0 | 0 |
+![DH parameters from URDF file][fk1]
+
+- | joint | parent | child | x | y | z | r | p | y |
+--- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+0 | fixed_base_joint | base_footprint | base_link | 0 | 0 | 0 | 0 | 0 | 0 |
+1 | joint_1 | base_link | link_1 | 0 | 0 | 0.33 | 0 | 0 | 0 |
+2 | joint_2 | link_1 | link_2 | 0 .35| 0 | 0.42 | 0 | 0 | 0 |
+3 | joint_3 | link_2 | link_3 | 0 | 0 | 1.25 | 0 | 0 | 0 |
+4 | joint_4 | link_3 | link_4 | 0.96 | 0 | -0.054 | 0 | 0 | 0 |
+5 | joint_5 | link_4 | link_5 | 0.54 | 0 | 0 | 0 | 0 | 0 |
+6 | joint_6 | link_5 | link_6 | 0.193 | 0 | 0 | 0 | 0 | 0 |
+EE | gripper_joint | link_6 | gripper_link | 0.11 | 0 | 0 | 0 | 0 | 0 |
 
 We can derive our modified DH table.
 
-| Links | i | alpha(i-1) | a(i-1) | d(i) | theta(i) |
-| ---- | --- | --- | --- | --- | --- |
-| 0->1 | 1 | 0 | 0 | 0.75 | q1 |
-| 1->2 | 2 | -pi/2 | 0.35 | 0 | -pi/2+q2 |
-| 2->3 | 3 | 0 |  | 1.25 | q3 |
-| 3->4 | 4 | -pi/2 | -0.05 | 1.5 | q4 |
-| 4->5 | 5 | pi/2 | 0 | 0 | q5 |
-| 5->6 | 6 | -pi | 0 | 0 | q6 |
-| 6->7 | 7 | 0 | 0 | 0.303 | q7 |
+![Modified DH parameters][fk2]
 
+Links | i | alpha(i-1) | a(i-1) | d(i) | theta(i) |
+--- | --- | --- | --- | ---
+0->1 | 1 | 0 | 0 | 0.75 | q1 |
+1->2 | 2 | -pi/2 | 0.35 | 0 | -pi/2+q2 |
+2->3 | 3 | 0 |  | 1.25 | q3 |
+3->4 | 4 | -pi/2 | -0.05 | 1.5 | q4 |
+4->5 | 5 | pi/2 | 0 | 0 | q5 |
+5->6 | 6 | -pi/2 | 0 | 0 | q6 |
+6->7 | 7 | 0 | 0 | 0.303 | q7 |
 
-![alt text][image1]
 
 #### 2. Using the DH parameter table you derived earlier, create individual transformation matrices about each joint. In addition, also generate a generalized homogeneous transform between base_link and gripper_link using only end-effector(gripper) pose.
 
 We can create individual transformation matrices using our modified DH table.
 
-First, 
+The relative translation and orientation of link (i-1) to link (i) in matrix form.
 ```python
 # Define Modified DH Transformation matrix
 def TF_Matrix(alpha, a, d, q):
@@ -68,6 +73,7 @@ def TF_Matrix(alpha, a, d, q):
     return TF
 ```
 
+Individual joints transformation matrices.
 
 ```python
 # Create individual transformation matrices
@@ -80,6 +86,7 @@ T5_6 =  TF_Matrix(alpha5, a5, d6, q6).subs(DH_Table)
 T6_EE = TF_Matrix(alpha6, a6, d7, q7).subs(DH_Table)
 ```
 
+Generalized homogeneous transform.
 
 ```python
 	# Extract rotation matrices from the transformation matrices
@@ -157,7 +164,6 @@ theta5 = atan2(sqrt(R3_6[0,2] * R3_6[0,2] + R3_6[2,2] * R3_6[2,2]), R3_6[1,2])
 theta6 = atan2(-R3_6[1,1], R3_6[1,0]) 
 ```
 
-![alt text][image2] 
 
 ### Project Implementation
 
@@ -165,6 +171,6 @@ theta6 = atan2(-R3_6[1,1], R3_6[1,0])
 
 Here is my result video. https://youtu.be/ugLVY9zCm9I
 
-![alt text][image3]
+![result image][result]
 
 
