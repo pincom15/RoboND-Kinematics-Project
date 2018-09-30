@@ -32,7 +32,7 @@ We can find the URDF configuration in `kr210.urdf.xacro` file. From the URDF fil
 
 ![DH parameters from URDF file][fk1]
 
-- | joint | parent | child | x | y | z | r | p | y |
+no | joint | parent | child | x | y | z | r | p | y |
 --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 0 | fixed_base_joint | base_footprint | base_link | 0 | 0 | 0 | 0 | 0 | 0 |
 1 | joint_1 | base_link | link_1 | 0 | 0 | 0.33 | 0 | 0 | 0 |
@@ -48,7 +48,7 @@ We can derive our modified DH table.
 ![Modified DH parameters][fk2]
 
 Links | i | alpha(i-1) | a(i-1) | d(i) | theta(i) |
---- | --- | --- | --- | ---
+--- | --- | --- | --- | --- | --- |
 0->1 | 1 | 0 | 0 | 0.75 | q1 |
 1->2 | 2 | -pi/2 | 0.35 | 0 | -pi/2+q2 |
 2->3 | 3 | 0 |  | 1.25 | q3 |
