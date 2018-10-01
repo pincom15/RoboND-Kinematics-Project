@@ -20,6 +20,10 @@
 [image3]: ./misc_images/misc2.png
 [fk1]: ./misc_images/fk_from_urdf.jpg
 [fk2]: ./misc_images/fk_modified.jpg
+[theta1]: ./misc_images/theta1.jpg
+[side_b]: ./misc_images/side_b.jpg
+[theta2,3]: ./misc_images/theta2,3.jpg
+[r3_6]: ./misc_images/r3_6.jpg
 [result]: ./misc_images/result.jpg
 
 ---
@@ -119,14 +123,23 @@ ROT_EE = ROT_z * ROT_y * ROT_x
 Rot_error = ROT_z.subs(y, radians(180)) * ROT_y.subs(p, radians(-90))
 
 ROT_EE = simplify(ROT_EE * Rot_error)
+
+WC = EE - (0.303) * ROT_EE[:,2]
 ```
 
-```python
-WC = EE - (0.303) * ROT_EE[:,2]
+If we know the wrist center, we can obtain the first three joint angles using arctangent.
 
+![theta1][theta1]
+
+```python
 # Calculate joint angles using Geometric IK method
 theta1 = atan2(WC[1],WC[0])
+```
 
+![side_b][side_b]
+![theta2,3][theta2,3]
+
+```python
 # SSS triangle for theta2 and theta3
 side_a = 1.501
 side_b = sqrt(pow((sqrt(WC[0] * WC[0] + WC[1] * WC[1]) - 0.35), 2) + pow((WC[2] - 0.75), 2))
@@ -153,6 +166,10 @@ theta6 = atan2(-R3_6[1,1], R3_6[1,0])
 
 Inverse Orientation Kinematics
 
+![r3_6][r3_6]
+
+We can find a set of Euler angles corresponding to the R3_6 rotation matrix.
+
 ```python
 R0_3 = T0_1[0:3,0:3] * T1_2[0:3,0:3] * T2_3[0:3,0:3] 
 R0_3 = R0_3.evalf(subs={q1: theta1, q2: theta2, q3: theta3}) 
@@ -165,6 +182,7 @@ theta6 = atan2(-R3_6[1,1], R3_6[1,0])
 ```
 
 
+
 ### Project Implementation
 
 #### 1. Fill in the `IK_server.py` file with properly commented python code for calculating Inverse Kinematics based on previously performed Kinematic Analysis. Your code must guide the robot to successfully complete 8/10 pick and place cycles. Briefly discuss the code you implemented and your results. 
@@ -172,5 +190,7 @@ theta6 = atan2(-R3_6[1,1], R3_6[1,0])
 Here is my result video. https://youtu.be/ugLVY9zCm9I
 
 ![result image][result]
+
+It seldomly fails to pick up a can, but accomplishes tasks above 90 percent.
 
 
